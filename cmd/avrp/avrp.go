@@ -1,28 +1,64 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
-
-	"github.com/mysterion/avrp/web"
+	"os"
 )
 
+func listFilesAndFolders(dirPath string) (error, []string, []string) {
+	entries, err := os.ReadDir(dirPath)
+	if err != nil {
+		return err, nil, nil
+	}
+	files := make([]string, 0)
+	folders := make([]string, 0)
+	for _, entry := range entries {
+		if entry.IsDir() {
+			folders = append(folders, entry.Name())
+		} else {
+			files = append(files, entry.Name())
+		}
+	}
+	return nil, files, folders
+}
+
+func isPathValid(path string) bool {
+	_, err := os.Stat(path)
+	return !os.IsNotExist(err)
+}
+
+func getUserInput(prompt string) string {
+	fmt.Println(prompt + ": ")
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	return scanner.Text()
+}
+
+func askForPath() string {
+	for {
+		path := getUserInput("Please enter path to serve")
+		if isPathValid(path) {
+			return path
+		} else {
+			fmt.Println("Invalid Path")
+		}
+	}
+}
+
+var servDir string
+
 func main() {
-	fmt.Println("Hello world")
-	r, err := web.LatestRelease()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Latest Release: ", r.Tag)
 
-	fmt.Println("All Releases: ")
-
-	rall, err := web.AllReleases()
-	if err != nil {
-		panic(err)
-	}
-
-	for _, release := range rall {
-		fmt.Println(release.Tag)
+	args := os.Args[1:]
+	if len(args) == 0 {
+		servDir = askForPath()
+	} else {
+		if isPathValid(args[0]) {
+			servDir = args[0]
+		} else {
+			servDir = askForPath()
+		}
 	}
 
 }
