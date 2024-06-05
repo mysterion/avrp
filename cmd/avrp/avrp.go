@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+
+	"github.com/mysterion/avrp/web/api"
 )
 
 func listFilesAndFolders(dirPath string) (error, []string, []string) {
@@ -60,5 +62,6 @@ func main() {
 			servDir = askForPath()
 		}
 	}
-
+	api.Init(servDir)
+	api.Start(5000)
 }
