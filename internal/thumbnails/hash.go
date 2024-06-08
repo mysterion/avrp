@@ -5,13 +5,21 @@ import (
 	"io"
 	"log"
 	"os"
+
+	"github.com/mysterion/avrp/internal/cache"
 )
 
 func logg(args ...string) {
 
 }
 
-func GenerateHash(file string) (string, error) {
+func Hash(file string) (string, error) {
+
+	c := cache.Get("HASH_" + file)
+	if c != "" {
+		return c, nil
+	}
+
 	s, err := os.Stat(file)
 	if err != nil {
 		log.Println(err)
@@ -44,5 +52,8 @@ func GenerateHash(file string) (string, error) {
 
 	}
 
-	return hex.EncodeToString(hash[:i]), nil
+	r := hex.EncodeToString(hash[:i])
+	cache.Set("HASH_"+file, r)
+
+	return r, nil
 }
