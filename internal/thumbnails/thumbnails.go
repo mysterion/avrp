@@ -41,11 +41,17 @@ func GetDuration(file string) (float64, error) {
 	var secs string
 	secs = cache.Get("DUR_" + file)
 	if secs == "" {
-		args := strings.Split(fmt.Sprintf("-v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 %s", file), " ")
+		args := []string{
+			"-v", "error",
+			"-show_entries",
+			"format=duration",
+			"-of", "default=noprint_wrappers=1:nokey=1",
+			file,
+		}
 		cmd := exec.Command(thirdparty.FfprobeBin, args...)
-		stdout, err := cmd.Output()
+		stdout, err := cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("ERR - Failed to get Duration - %v\n", err)
+			log.Printf("ERR - Failed to get Duration - %v\nSTDOUT:\n%s\n", err, stdout)
 			return 0, err
 		}
 		secs = strings.TrimSpace(string(stdout))
@@ -61,15 +67,17 @@ func Generated(file string) bool {
 	h, err := Hash(file)
 
 	if err != nil {
+		log.Println("ERR - ", err)
 		return false
 	}
 
 	duration, err := GetDuration(file)
 	if err != nil {
+		log.Println("ERR - ", err)
 		return false
 	}
 
-	p := filepath.Join(thumbdir, h, fmt.Sprintf("%v.jpg", math.Floor(duration/60)))
+	p := filepath.Join(thumbdir, h, fmt.Sprintf("%v.jpg", math.Floor(duration/60)-1))
 	_, err = os.Stat(p)
 
 	return err == nil
@@ -108,13 +116,14 @@ func Generate(file string) {
 	for i := 0; i < n; i++ {
 		go func(i int, done chan<- bool) {
 			defer func() { done <- true }()
-			cmdArgs := fmt.Sprintf(
-				"-y -accurate_seek -ss %v -i %v -frames:v 1 -vf crop=in_w/2:in_h/2:in_w:in_h/4,scale=320:-1 %v",
-				i*60,
-				file,
+			cmdArgs := []string{
+				"-y", "-accurate_seek", "-ss", fmt.Sprintf("%v", i*60),
+				"-i", file,
+				"-frames:v", "1",
+				"-vf", "crop=in_w/2:in_h/2:in_w:in_h/4,scale=320:-1",
 				filepath.Join(outDir, fmt.Sprintf("%v.jpg", i)),
-			)
-			cmd := exec.Command(thirdparty.FfmpegBin, strings.Split(cmdArgs, " ")...)
+			}
+			cmd := exec.Command(thirdparty.FfmpegBin, cmdArgs...)
 			log.Println("EXEC - ", thirdparty.FfmpegBin, cmdArgs)
 			stdout, err := cmd.CombinedOutput()
 			if err != nil {
@@ -128,4 +137,12 @@ func Generate(file string) {
 	for i := 0; i < n; i++ {
 		<-done
 	}
+}
+
+func Get(id string, file string) (string, error) {
+	h, err := Hash(file)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(thumbdir, h, fmt.Sprintf("%v.jpg", id)), nil
 }

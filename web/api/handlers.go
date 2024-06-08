@@ -2,9 +2,12 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/mysterion/avrp/internal/thumbnails"
 )
 
 var servDir string
@@ -58,3 +61,36 @@ func listFilesAndFolders(dirPath string) ([]string, []string, error) {
 }
 
 const filePath = "/file/"
+
+const thumbPath = "/thumb/"
+
+func thumbHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	file := filepath.Join(servDir, filepath.FromSlash(r.URL.Path[len(thumbPath):]))
+
+	if id == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintln(w, "id not in request")
+		return
+	}
+
+	_, err := os.Stat(file)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintln(w, "Not Found")
+		return
+	}
+
+	if !thumbnails.Generated(file) {
+		thumbnails.Generate(file)
+	}
+
+	p, err := thumbnails.Get(id, file)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, err.Error())
+		return
+	}
+
+	http.ServeFile(w, r, p)
+}

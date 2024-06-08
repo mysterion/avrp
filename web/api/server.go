@@ -1,12 +1,18 @@
 package api
 
 import (
+	"context"
 	"crypto/tls"
 	"embed"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"os"
+	"os/signal"
+	"time"
 
+	"github.com/mysterion/avrp/internal/utils"
 	"github.com/mysterion/avrp/web"
 )
 
@@ -38,6 +44,44 @@ func getTlsConfig() (*tls.Config, error) {
 	return config, nil
 }
 
+// port = 0, for a random port
+//
+// mux can be nil
+//
+// tlsConfig can be nil
+//
+// returns [<-ready], [<-done], [*http.Server]
+func New(port int, mux http.Handler, tlsConfig *tls.Config) (<-chan bool, <-chan bool, *http.Server) {
+
+	ready := make(chan bool, 1)
+	done := make(chan bool, 1)
+
+	server := http.Server{
+		Handler:   mux,
+		TLSConfig: tlsConfig,
+	}
+
+	go func() {
+		defer close(ready)
+		defer close(done)
+
+		listener, err := net.Listen("tcp4", fmt.Sprintf("%s:%d", "0.0.0.0", port))
+		utils.Panic(err)
+
+		server.Addr = listener.Addr().String()
+
+		ready <- true
+
+		err = server.ServeTLS(listener, "", "")
+
+		if err != nil && err != http.ErrServerClosed {
+			fmt.Println(err.Error())
+		}
+	}()
+
+	return ready, done, &server
+}
+
 func Start(port int) {
 	tlsConfig, err := getTlsConfig()
 	if err != nil {
@@ -47,27 +91,36 @@ func Start(port int) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc(listPath, listHandler)
+	mux.HandleFunc(thumbPath, thumbHandler)
 
 	fileServer := http.FileServer(http.Dir(servDir))
 	mux.Handle(filePath, http.StripPrefix(filePath, fileServer))
 
-	server := &http.Server{
-		Addr:      fmt.Sprintf(":%v", port),
-		TLSConfig: tlsConfig,
-		Handler:   mux,
+	sigint := make(chan os.Signal, 1)
+	signal.Notify(sigint, os.Interrupt)
+
+	ready, done, s := New(port, mux, tlsConfig)
+	<-ready
+
+	fmt.Println("Server listening on: ")
+	for _, ip := range web.GetIps() {
+		fmt.Printf("https://%v:%v\n", ip, port)
+	}
+	<-sigint
+
+	ctx, cancel := context.WithDeadline(context.TODO(), time.Now().Add(time.Second*3))
+	defer cancel()
+
+	s.Shutdown(ctx)
+
+	log.Println("Shutting down..")
+
+	select {
+	case <-done:
+		log.Println("bye")
+	case <-ctx.Done():
+		log.Println("shutdown request timedout..")
+		log.Println("ok..")
 	}
 
-	go func() {
-		fmt.Println("Server listening on: ")
-		for _, ip := range web.GetIps() {
-			fmt.Printf("https://%v:%v\n", ip, port)
-		}
-		err = server.ListenAndServeTLS("", "")
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
-
-	// todo : graceful shutdown/startup
-	select {}
 }
