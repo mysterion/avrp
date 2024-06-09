@@ -3,9 +3,12 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 
+	"github.com/mysterion/avrp/internal/utils"
 	"github.com/mysterion/avrp/web/api"
+	"github.com/mysterion/avrp/web/dist"
 )
 
 func isPathValid(path string) bool {
@@ -34,7 +37,14 @@ func askForPath() string {
 var servDir string
 
 func main() {
+	utils.GoRunGatekeeper()
 
+	ok := dist.Ok()
+	if !ok {
+		log.Println("Downloading Latest version of Aframe Vr Player")
+		err := dist.DownloadLatest()
+		utils.Panic(err)
+	}
 	args := os.Args[1:]
 	if len(args) == 0 {
 		servDir = askForPath()

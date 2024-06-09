@@ -3,6 +3,7 @@ package utils
 import (
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 var ConfigDir string
@@ -20,6 +21,7 @@ func init() {
 
 	AppDir, err = os.Executable()
 	Panic(err)
+	AppDir = filepath.Dir(AppDir)
 	if DEV {
 		AppDir, err = os.Getwd()
 		Panic(err)
@@ -33,4 +35,11 @@ func Panic(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func GoRunGatekeeper() {
+	if strings.HasPrefix(AppDir, filepath.Join(os.TempDir(), "go-build")) {
+		panic("MAYBE YOU FORGOT DEV=1 ? I'M NOT LETTING YOU RUN STUFF FROM TEMP DIRECTORY")
+	}
+
 }

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"time"
 
 	"github.com/mysterion/avrp/internal/utils"
@@ -90,6 +91,7 @@ func Start(port int) {
 
 	mux := http.NewServeMux()
 
+	mux.Handle(distPath, http.FileServer(http.Dir(filepath.Join(utils.AppDir, "dist"))))
 	mux.HandleFunc(listPath, listHandler)
 	mux.HandleFunc(thumbPath, thumbHandler)
 

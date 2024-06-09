@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -21,10 +22,17 @@ type ListData struct {
 	Folders []string `json:"folders"`
 }
 
+const distPath = "/"
+
 const listPath = "/list/"
 
 func listHandler(w http.ResponseWriter, r *http.Request) {
-	listDir := filepath.Join(servDir, filepath.FromSlash(r.URL.Path[len(listPath):]))
+	listDir, err := url.PathUnescape(filepath.Join(servDir, filepath.FromSlash(r.URL.Path[len(listPath):])))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	files, folders, err := listFilesAndFolders(listDir)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -73,15 +81,14 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := r.URL.Query().Get("id")
-	file := filepath.Join(servDir, filepath.FromSlash(r.URL.Path[len(thumbPath):]))
+	file, err := url.PathUnescape(filepath.Join(servDir, filepath.FromSlash(r.URL.Path[len(thumbPath):])))
 
-	if id == "" {
+	if id == "" || err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintln(w, "id not in request")
 		return
 	}
 
-	_, err := os.Stat(file)
+	_, err = os.Stat(file)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintln(w, "Not Found")
