@@ -74,7 +74,7 @@ func extractZip(srcZip string, dst string) error {
 	}
 	defer r.Close()
 
-	err = os.MkdirAll(dst, os.ModeDir)
+	err = os.MkdirAll(dst, 0755)
 	if err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func extractZip(srcZip string, dst string) error {
 		target := filepath.Join(dst, f.Name)
 		log.Println("Extracting - ", target)
 		if !fi.IsDir() {
-			err := os.MkdirAll(filepath.Dir(target), os.ModeDir)
+			err := os.MkdirAll(filepath.Dir(target), 0755)
 			if err != nil {
 				return err
 			}

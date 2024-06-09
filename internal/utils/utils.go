@@ -27,7 +27,7 @@ func init() {
 		Panic(err)
 	}
 
-	err = os.MkdirAll(ConfigDir, os.ModeDir)
+	err = os.MkdirAll(ConfigDir, 0755)
 	Panic(err)
 }
 

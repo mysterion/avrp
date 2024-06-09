@@ -24,7 +24,7 @@ var muGen sync.Mutex
 
 func init() {
 	thumbdir = filepath.Join(utils.ConfigDir, "thumbnails")
-	err := os.MkdirAll(thumbdir, os.ModeDir)
+	err := os.MkdirAll(thumbdir, 0755)
 
 	if err != nil {
 		log.Printf("Thumbnails not available - %v\n", err)
@@ -97,7 +97,7 @@ func Generate(file string) {
 	}
 
 	outDir := filepath.Join(thumbdir, h)
-	err = os.MkdirAll(outDir, os.ModeDir)
+	err = os.MkdirAll(outDir, 0755)
 
 	if err != nil {
 		log.Printf("ERR while creating thumbnail dir: %v\n", err.Error())
