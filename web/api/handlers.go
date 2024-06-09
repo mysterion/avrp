@@ -65,6 +65,13 @@ const filePath = "/file/"
 const thumbPath = "/thumb/"
 
 func thumbHandler(w http.ResponseWriter, r *http.Request) {
+
+	if !thumbnails.Available {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		fmt.Fprintln(w, "Thumbnails not available for now. Check logs for more info.")
+		return
+	}
+
 	id := r.URL.Query().Get("id")
 	file := filepath.Join(servDir, filepath.FromSlash(r.URL.Path[len(thumbPath):]))
 

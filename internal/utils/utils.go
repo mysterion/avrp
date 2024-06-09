@@ -18,6 +18,13 @@ func init() {
 
 	ConfigDir = filepath.Join(h, ".avrp")
 
+	AppDir, err = os.Executable()
+	Panic(err)
+	if DEV {
+		AppDir, err = os.Getwd()
+		Panic(err)
+	}
+
 	err = os.MkdirAll(ConfigDir, os.ModeDir)
 	Panic(err)
 }

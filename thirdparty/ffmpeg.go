@@ -26,22 +26,14 @@ func init() {
 		ffprobe += ".exe"
 	}
 
-	checkPath, err := os.Executable()
-	utils.Panic(err)
-
-	if utils.DEV {
-		checkPath, err = os.Getwd()
-		utils.Panic(err)
-	}
-
 	// check in distribution
-	FfmpegBin = filepath.Join(checkPath, "thirdparty", ffmpeg)
-	_, err = os.Stat(FfmpegBin)
+	FfmpegBin = filepath.Join(utils.AppDir, "thirdparty", ffmpeg)
+	_, err := os.Stat(FfmpegBin)
 	if err != nil {
 		log.Println(err)
 		FfmpegBin = ""
 	}
-	FfprobeBin = filepath.Join(checkPath, "thirdparty", ffprobe)
+	FfprobeBin = filepath.Join(utils.AppDir, "thirdparty", ffprobe)
 	_, err = os.Stat(FfprobeBin)
 	if err != nil {
 		log.Println(err)
