@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,6 +24,7 @@ func init() {
 	Panic(err)
 	AppDir = filepath.Dir(AppDir)
 	if DEV {
+		log.Println("***RUNNING AS DEV***")
 		AppDir, err = os.Getwd()
 		Panic(err)
 	}
