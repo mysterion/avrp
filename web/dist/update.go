@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
+
+	"github.com/mysterion/avrp/internal/utils"
 )
 
 type Asset struct {
@@ -21,6 +24,54 @@ type Release struct {
 	Tag    string  `json:"tag_name"`
 	URL    string  `json:"html_url"`
 	Assets []Asset `json:"assets"`
+}
+
+// TODO:
+// when http query to github is done. LAST_UPDATE_CHECK file should be updated
+// this function will ONLY READ the LAST_UPDATE_CHECK file and return true or false
+
+func CheckUFile() (bool, error) {
+
+	fd, err := os.Open(utils.UpdateFile)
+	if err != nil {
+		return false, err
+	}
+	defer fd.Close()
+
+	lastUpdate := make([]byte, 128)
+	n, err := fd.Read(lastUpdate)
+	if n == 0 {
+		return true, nil
+	} else if err != nil {
+		return false, err
+	}
+
+	t, err := time.Parse(time.RFC3339, string(lastUpdate[:n]))
+	if err != nil {
+		return false, err
+	}
+
+	if t.Before(time.Now().AddDate(0, 0, -7)) {
+		return true, nil
+	}
+	return false, nil
+}
+
+func UpdateUFile() error {
+	fd, err := os.OpenFile(utils.UpdateFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer fd.Close()
+
+	t := time.Now().Format(time.RFC3339)
+
+	_, err = fd.WriteString(t)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func latestRelease() (Release, error) {

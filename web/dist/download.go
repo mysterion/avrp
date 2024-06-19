@@ -57,13 +57,19 @@ func DownloadLatest() error {
 		return err
 	}
 
-	// zipFilePath := filepath.Join(os.TempDir(), "avrp-latest2137112405")
-
 	err = extractZip(zipFile.Name(), utils.AppDir)
 	if err != nil {
-		log.Println("Extracted successfully")
+		return err
 	}
-	return err
+	log.Println("Extracted successfully")
+
+	log.Println("Updating `last updated` file")
+	err = UpdateUFile()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func extractZip(srcZip string, dst string) error {

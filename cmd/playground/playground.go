@@ -2,8 +2,6 @@ package main
 
 import (
 	"log"
-
-	"github.com/mysterion/avrp/web/dist"
 )
 
 func main() {
@@ -15,5 +13,6 @@ func main() {
 	// fmt.Println(thumbnails.GetDuration("c:\\Users\\User\\Downloads\\Videos\\sample.mp4"))
 	// thumbnails.Generate("c:\\Users\\User\\Downloads\\Videos\\hm-dis.mp4")
 	// dist.ExtractZip(filepath.Join(utils.AppDir, "test.zip"), filepath.Join(os.TempDir(), "asdadasd"))
-	log.Println(dist.DownloadLatest())
+	// log.Println(dist.UpdateUFile())
+	// log.Println(dist.CheckUFile())
 }

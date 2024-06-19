@@ -39,12 +39,18 @@ var servDir string
 func main() {
 	utils.GoRunGatekeeper()
 
-	ok := dist.Ok()
-	if !ok {
+	update, err := dist.CheckUFile()
+	if err != nil {
+		log.Println("ERR: while checking for update, ", err)
+		log.Println("Skipping Update check")
+	}
+
+	if update || !dist.Ok() {
 		log.Println("Downloading Latest version of Aframe Vr Player")
 		err := dist.DownloadLatest()
 		utils.Panic(err)
 	}
+
 	args := os.Args[1:]
 	if len(args) == 0 {
 		servDir = askForPath()
