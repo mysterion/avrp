@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 
@@ -13,7 +15,7 @@ import (
 
 func isPathValid(path string) bool {
 	_, err := os.Stat(path)
-	return !os.IsNotExist(err)
+	return !errors.Is(err, fs.ErrNotExist)
 }
 
 func getUserInput(prompt string) string {
@@ -37,18 +39,11 @@ func askForPath() string {
 var servDir string
 
 func main() {
+	log.SetFlags(log.Lshortfile | log.LstdFlags)
 	utils.GoRunGatekeeper()
 
-	update, err := dist.CheckUFile()
-	if err != nil {
-		log.Println("ERR: while checking for update, ", err)
-		log.Println("Skipping Update check")
-	}
-
-	if update || !dist.Ok() {
-		log.Println("Downloading Latest version of Aframe Vr Player")
-		err := dist.DownloadLatest()
-		utils.Panic(err)
+	if !utils.DEV {
+		dist.TryUpdate()
 	}
 
 	args := os.Args[1:]

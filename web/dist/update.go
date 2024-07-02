@@ -2,10 +2,16 @@ package dist
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
+	"log"
+	"math"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/mysterion/avrp/internal/utils"
@@ -26,27 +32,27 @@ type Release struct {
 	Assets []Asset `json:"assets"`
 }
 
-// TODO:
-// when http query to github is done. LAST_UPDATE_CHECK file should be updated
-// this function will ONLY READ the LAST_UPDATE_CHECK file and return true or false
-
-func CheckUFile() (bool, error) {
-
-	fd, err := os.Open(utils.UpdateFile)
+func (r *Release) Version() int {
+	vs := strings.ReplaceAll(r.Tag, ".", "")
+	v, err := strconv.Atoi(vs)
 	if err != nil {
-		return false, err
+		return 0
 	}
-	defer fd.Close()
+	return v
+}
 
-	lastUpdate := make([]byte, 128)
-	n, err := fd.Read(lastUpdate)
-	if n == 0 {
+// returns `true` if update-check was more than 7 days ago
+// or running this app for the first time
+func checkUFile() (bool, error) {
+
+	lastUpdate, err := os.ReadFile(utils.UpdateFile)
+	if errors.Is(err, fs.ErrNotExist) {
 		return true, nil
 	} else if err != nil {
 		return false, err
 	}
 
-	t, err := time.Parse(time.RFC3339, string(lastUpdate[:n]))
+	t, err := time.Parse(time.RFC3339, string(lastUpdate))
 	if err != nil {
 		return false, err
 	}
@@ -74,40 +80,40 @@ func UpdateUFile() error {
 	return nil
 }
 
-func latestRelease() (Release, error) {
+func LatestRelease() (Release, error) {
 	repoOwner := "mysterion"
 	repoName := "aframe-vr-player"
+	var r Release
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", repoOwner, repoName)
 
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return Release{}, err
+		return r, err
 	}
 
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return Release{}, err
+		return r, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return Release{}, err
+		return r, err
 	}
 
-	var release Release
-	err = json.Unmarshal(body, &release)
+	err = json.Unmarshal(body, &r)
 	if err != nil {
-		return Release{}, err
+		return r, err
 	}
 
-	return release, nil
+	return r, nil
 }
 
-func allReleases() ([]Release, error) {
+func AllReleases() ([]Release, error) {
 	repoOwner := "mysterion"
 	repoName := "aframe-vr-player"
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases", repoOwner, repoName)
@@ -138,4 +144,63 @@ func allReleases() ([]Release, error) {
 	}
 
 	return releases, nil
+}
+
+// Fetches the latest dist if no dist is found
+// or
+// Updates the existing
+func TryUpdate() {
+	tryUpdate, err := checkUFile()
+
+	v := Ver()
+	log.Printf("Current version: %v\n", v)
+
+	if err != nil {
+		log.Println("ERR: while checking for update", err)
+		log.Println("Skipping Update check")
+		return
+	}
+
+	if !tryUpdate {
+		return
+	}
+
+	if v == math.MaxInt {
+		return
+	}
+
+	log.Println("Checking for updates")
+
+	r, err := LatestRelease()
+	if err != nil {
+		log.Println("ERR: Failed to fetch latest Release", err)
+		log.Println("Skipping Update check")
+		return
+	}
+
+	log.Printf("Latest release: %v, v:%v\n", r.Tag, r.Version())
+
+	if v >= r.Version() {
+		log.Println("Already on the latest version")
+		if v == r.Version() {
+			utils.Panic(UpdateUFile())
+		}
+		return
+	}
+
+	log.Println("Downloading the latest version")
+
+	err = DownloadRelease(r)
+	if err != nil {
+		log.Println("ERR: Failed to fetch latest Release", err)
+		log.Println("Skipping Update check")
+		if !Valid() {
+			if err := Delete(); errors.Is(err, fs.ErrNotExist) {
+				panic(err)
+			}
+		}
+		return
+	}
+
+	utils.Panic(UpdateUFile())
 }

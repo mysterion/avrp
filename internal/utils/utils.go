@@ -36,9 +36,6 @@ func init() {
 	err = os.MkdirAll(ConfigDir, 0755)
 	Panic(err)
 
-	fd, err := os.OpenFile(UpdateFile, os.O_APPEND|os.O_CREATE, 0644)
-	Panic(err)
-	defer fd.Close()
 }
 
 func Panic(err error) {

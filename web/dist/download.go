@@ -12,12 +12,7 @@ import (
 	"github.com/mysterion/avrp/internal/utils"
 )
 
-func DownloadLatest() error {
-
-	r, err := latestRelease()
-	if err != nil {
-		return err
-	}
+func DownloadRelease(r Release) error {
 
 	if len(r.Assets) == 0 {
 		log.Fatal("Nothing to download in the latest release.")
@@ -64,10 +59,6 @@ func DownloadLatest() error {
 	log.Println("Extracted successfully")
 
 	log.Println("Updating `last updated` file")
-	err = UpdateUFile()
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
