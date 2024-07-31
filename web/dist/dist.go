@@ -13,26 +13,27 @@ import (
 	"github.com/mysterion/avrp/internal/utils"
 )
 
+var VersionFile string
+
+func init() {
+	VersionFile = filepath.Join(utils.DistDir, "version")
+}
+
 // checks if dist is present
 func Valid() bool {
-	if utils.DEV {
-		return true
-	}
-	_, err := os.Stat(filepath.Join(utils.AppDir, "dist", "index.html"))
+	_, err := os.Stat(filepath.Join(utils.DistDir, "index.html"))
 	return err == nil
 }
 
 func Delete() error {
-	return os.Remove(filepath.Join(utils.AppDir, "dist"))
+	return os.Remove(utils.DistDir)
 }
 
 // returns 0 , when no dist
 //
-// returns math.MaxInt, when no version file can be found on dist
-//
-// indicating a non-standard version
+// returns math.MaxInt, when no Version file found(maybe custom version?)
 func Ver() int {
-	fd, err := os.Open(filepath.Join(utils.AppDir, "dist", "version"))
+	fd, err := os.Open(VersionFile)
 	if errors.Is(err, fs.ErrNotExist) {
 
 		log.Println("ERR: Version file doesn't exist")

@@ -8,6 +8,7 @@ import (
 )
 
 var ConfigDir string
+var DistDir string
 var AppDir string
 var UpdateFile string
 
@@ -20,6 +21,8 @@ func init() {
 	Panic(err)
 
 	ConfigDir = filepath.Join(h, ".avrp")
+
+	DistDir = filepath.Join(ConfigDir, "dist")
 
 	AppDir, err = os.Executable()
 	Panic(err)
@@ -35,6 +38,17 @@ func init() {
 
 	err = os.MkdirAll(ConfigDir, 0755)
 	Panic(err)
+
+	err = os.MkdirAll(DistDir, 0755)
+	Panic(err)
+
+	if DEV {
+		log.Printf("Home directory: %s\n", h)
+		log.Printf("Config directory: %s\n", ConfigDir)
+		log.Printf("Dist directory: %s\n", DistDir)
+		log.Printf("App Run directory: %s\n", AppDir)
+		log.Printf("Update File: %s\n", UpdateFile)
+	}
 
 }
 

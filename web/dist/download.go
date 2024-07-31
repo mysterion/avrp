@@ -52,10 +52,19 @@ func DownloadRelease(r Release) error {
 		return err
 	}
 
-	err = extractZip(zipFile.Name(), utils.AppDir)
+	err = extractZip(zipFile.Name(), utils.DistDir)
 	if err != nil {
+		log.Println("ERR: Failed to extract the zip")
 		return err
 	}
+
+	err = os.WriteFile(VersionFile, []byte(r.Tag), 0644)
+
+	if err != nil {
+		log.Println("ERR: Failed to write version file")
+		return err
+	}
+
 	log.Println("Extracted successfully")
 
 	log.Println("Updating `last updated` file")

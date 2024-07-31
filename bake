@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# nsfu
+cd "$(dirname "$0")"
+if [ -f ".env" ]; then
+    export $(grep -v '^#' .env | xargs -d '\n')
+fi
+
+function nze() {
+    if [[ $1 -ne 0 ]]; then
+        exit 1
+    fi
+}
+
+which go
+nze
+
+set -x
+
+if [ "$1" = "run" ]; then
+    go run avrp.go
+
+elif [ "$1" = "play" ]; then
+    go run cmd/playground/playground.go
+
+elif [ "$1" = "build" ]; then
+    mkdir -p build/thirdparty
+    go build -o build/ avrp.go
+
+    cp -r thirdparty/*.md build/thirdparty/
+
+elif [ "$1" = "buildffmpeg" ]; then
+    mkdir -p build/thirdparty
+    go build -o build/ avrp.go
+
+    cp -r thirdparty/ffmpeg* thirdparty/ffprobe* build/thirdparty/
+    rm build/thirdparty/*.go
+    rm build/thirdparty/*.md
+
+elif [ "$1" = "testserver" ]; then
+    go run test/github_server/main.go
+
+
+elif [ "$1" = "test" ]; then
+    go test -v ${@:2}
+
+elif [ "$1" = "clean" ]; then
+    rm -rf build/
+
+else
+    set +x
+    echo "Shiver me timbers!!.. Invalid arrghh - $1"
+    exit 1
+fi

@@ -1,12 +1,12 @@
 package thirdparty
 
 import (
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 
+	"github.com/mysterion/avrp/internal/logg"
 	"github.com/mysterion/avrp/internal/utils"
 )
 
@@ -30,24 +30,23 @@ func init() {
 	FfmpegBin = filepath.Join(utils.AppDir, "thirdparty", ffmpeg)
 	_, err := os.Stat(FfmpegBin)
 	if err != nil {
-		log.Println(err)
+		logg.Debug(err)
 		FfmpegBin = ""
 	}
 	FfprobeBin = filepath.Join(utils.AppDir, "thirdparty", ffprobe)
 	_, err = os.Stat(FfprobeBin)
 	if err != nil {
-		log.Println(err)
+		logg.Debug(err)
 		FfprobeBin = ""
 	}
 
 	// check in PATH
 	if FfmpegBin == "" {
 		ffmpegPath, err := exec.LookPath(ffmpeg)
-		log.Println(err)
 		if err == nil {
 			FfmpegBin = ffmpegPath
 		} else {
-			log.Println(err)
+			logg.Debug(err)
 		}
 
 	}
@@ -57,8 +56,10 @@ func init() {
 		if err == nil {
 			FfprobeBin = ffprobePath
 		} else {
-			log.Println(err)
+			logg.Debug(err)
 		}
 	}
 
+	logg.Debug("Ffmpeg", FfmpegBin)
+	logg.Debug("Ffprobe", FfprobeBin)
 }

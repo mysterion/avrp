@@ -1,9 +1,9 @@
-package api
+package main
 
 import (
 	"context"
 	"crypto/tls"
-	"embed"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -14,34 +14,11 @@ import (
 
 	"github.com/mysterion/avrp/internal/utils"
 	"github.com/mysterion/avrp/web"
+	"github.com/mysterion/avrp/web/dist"
 )
 
-//go:embed certs/*
-var Certs embed.FS
-
-func GetTlsConfig() (*tls.Config, error) {
-	config := &tls.Config{
-		MinVersion:               tls.VersionTLS12,
-		PreferServerCipherSuites: true,
-		Certificates:             make([]tls.Certificate, 1),
-	}
-
-	certBlock, err := Certs.ReadFile("certs/cert.pem")
-	if err != nil {
-		return nil, err
-	}
-
-	keyBlock, err := Certs.ReadFile("certs/key.pem")
-	if err != nil {
-		return nil, err
-	}
-
-	config.Certificates[0], err = tls.X509KeyPair(certBlock, keyBlock)
-	if err != nil {
-		return nil, err
-	}
-
-	return config, nil
+func setupEnv() {
+	os.Setenv("URL_LATEST_RELEASE", "http://localhost:5678/releases/latest")
 }
 
 // port = 0, for a random port
@@ -51,7 +28,7 @@ func GetTlsConfig() (*tls.Config, error) {
 // tlsConfig can be nil
 //
 // returns [<-ready], [<-done], [*http.Server]
-func New(port int, mux http.Handler, tlsConfig *tls.Config) (<-chan bool, <-chan bool, *http.Server) {
+func new(port int, mux http.Handler, tlsConfig *tls.Config) (<-chan bool, <-chan bool, *http.Server) {
 
 	ready := make(chan bool, 1)
 	done := make(chan bool, 1)
@@ -72,7 +49,7 @@ func New(port int, mux http.Handler, tlsConfig *tls.Config) (<-chan bool, <-chan
 
 		ready <- true
 
-		err = server.ServeTLS(listener, "", "")
+		err = server.Serve(listener)
 
 		if err != nil && err != http.ErrServerClosed {
 			fmt.Println(err.Error())
@@ -83,25 +60,34 @@ func New(port int, mux http.Handler, tlsConfig *tls.Config) (<-chan bool, <-chan
 	return ready, done, &server
 }
 
-func Start(port int) {
-	tlsConfig, err := GetTlsConfig()
-	if err != nil {
-		panic(err)
-	}
-
+func main() {
+	setupEnv()
 	mux := http.NewServeMux()
+	mux.HandleFunc("/releases/latest", func(w http.ResponseWriter, r *http.Request) {
+		var rel dist.Release
+		var as dist.Asset
+		as.BrowserDownloadUrl = "http://localhost:5678/file/dist-1.3.2.zip"
+		rel.Tag = "1.3.2"
+		rel.URL = "http://localhost:5678/file/dist-1.3.2.zip"
+		rel.Assets = append(rel.Assets, as)
+		b, err := json.Marshal(rel)
+		log.Println(rel)
+		if err != nil {
+			w.Write([]byte("Failed to marshal release"))
+			return
+		}
+		w.Write(b)
+	})
 
-	mux.Handle(distPath, http.FileServer(http.Dir(utils.DistDir)))
-	mux.HandleFunc(listPath, listHandler)
-	mux.HandleFunc(thumbPath, thumbHandler)
-
-	fileServer := http.FileServer(http.Dir(servDir))
+	filePath := "/file/"
+	fileServer := http.FileServer(http.Dir("test/github_server"))
 	mux.Handle(filePath, http.StripPrefix(filePath, fileServer))
 
 	sigint := make(chan os.Signal, 1)
 	signal.Notify(sigint, os.Interrupt)
 
-	ready, done, s := New(port, mux, tlsConfig)
+	port := 5678
+	ready, done, s := new(port, mux, nil)
 	<-ready
 
 	fmt.Println("Server listening on: ")

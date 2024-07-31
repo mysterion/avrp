@@ -84,7 +84,11 @@ func LatestRelease() (Release, error) {
 	repoOwner := "mysterion"
 	repoName := "aframe-vr-player"
 	var r Release
-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", repoOwner, repoName)
+
+	url := os.Getenv("URL_LATEST_RELEASE")
+	if url == "" {
+		url = fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", repoOwner, repoName)
+	}
 
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
@@ -116,7 +120,11 @@ func LatestRelease() (Release, error) {
 func AllReleases() ([]Release, error) {
 	repoOwner := "mysterion"
 	repoName := "aframe-vr-player"
-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases", repoOwner, repoName)
+
+	url := os.Getenv("URL_ALL_RELEASES")
+	if url == "" {
+		url = fmt.Sprintf("https://api.github.com/repos/%s/%s/releases", repoOwner, repoName)
+	}
 
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
@@ -155,7 +163,10 @@ func TryUpdate() {
 	v := Ver()
 	log.Printf("Current version: %v\n", v)
 
-	if err != nil {
+	valid := Valid()
+	if !valid {
+		tryUpdate = true
+	} else if valid && err != nil {
 		log.Println("ERR: while checking for update", err)
 		log.Println("Skipping Update check")
 		return

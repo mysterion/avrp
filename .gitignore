@@ -22,3 +22,10 @@ go.work
 go.work.sum
 /dist
 build/
+
+thirdparty/ffmpeg
+thirdparty/ffmpeg.exe
+
+thirdparty/ffprobe
+thirdparty/ffprobe.exe
+

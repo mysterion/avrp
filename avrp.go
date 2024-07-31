@@ -42,8 +42,8 @@ func main() {
 	log.SetFlags(log.Lshortfile | log.LstdFlags)
 	utils.GoRunGatekeeper()
 
+	dist.TryUpdate()
 	if !utils.DEV {
-		dist.TryUpdate()
 	}
 
 	args := os.Args[1:]
