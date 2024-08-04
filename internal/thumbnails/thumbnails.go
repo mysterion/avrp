@@ -52,7 +52,7 @@ func GetDuration(file string) (float64, error) {
 		stdout, err := cmd.CombinedOutput()
 		if err != nil {
 			log.Printf("ERR - Failed to get Duration - %v\nSTDOUT:\n%s\n", err, stdout)
-			return 0, err
+			stdout = []byte("0")
 		}
 		secs = strings.TrimSpace(string(stdout))
 

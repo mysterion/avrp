@@ -14,6 +14,7 @@ import (
 
 	"github.com/mysterion/avrp/internal/utils"
 	"github.com/mysterion/avrp/web"
+	"github.com/rs/cors"
 )
 
 //go:embed certs/*
@@ -91,12 +92,28 @@ func Start(port int) {
 
 	mux := http.NewServeMux()
 
-	mux.Handle(distPath, http.FileServer(http.Dir(utils.DistDir)))
-	mux.HandleFunc(listPath, listHandler)
-	mux.HandleFunc(thumbPath, thumbHandler)
+	const filePath = "/file/"
+	var fileHandler = http.StripPrefix(filePath, http.FileServer(http.Dir(servDir)))
 
-	fileServer := http.FileServer(http.Dir(servDir))
-	mux.Handle(filePath, http.StripPrefix(filePath, fileServer))
+	listH := listHandler
+	thumbH := thumbHandler
+
+	distH := distHandler
+	fileH := fileHandler
+
+	if utils.DEV {
+		log.Println("Enabling CORS")
+		listH = wrapCors(listHandler)
+		thumbH = wrapCors(thumbHandler)
+
+		distH = cors.AllowAll().Handler(distHandler)
+		fileH = cors.AllowAll().Handler(fileHandler)
+	}
+
+	mux.Handle(distPath, distH)
+	mux.HandleFunc(listPath, listH)
+	mux.HandleFunc(thumbPath, thumbH)
+	mux.Handle(filePath, fileH)
 
 	sigint := make(chan os.Signal, 1)
 	signal.Notify(sigint, os.Interrupt)

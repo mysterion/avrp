@@ -6,9 +6,12 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/mysterion/avrp/internal/thumbnails"
+	"github.com/mysterion/avrp/internal/utils"
+	"github.com/rs/cors"
 )
 
 var servDir string
@@ -17,12 +20,27 @@ func Init(sd string) {
 	servDir = sd
 }
 
+type File struct {
+	Name     string `json:"name"`
+	Duration int    `json:"duration"`
+}
+
 type ListData struct {
-	Files   []string `json:"files"`
+	Files   []File   `json:"files"`
 	Folders []string `json:"folders"`
 }
 
+func wrapCors(h http.HandlerFunc) func(http.ResponseWriter, *http.Request) {
+	ret := func(w http.ResponseWriter, r *http.Request) {
+		cors.AllowAll().HandlerFunc(w, r)
+		h(w, r)
+	}
+	return ret
+}
+
 const distPath = "/"
+
+var distHandler = http.FileServer(http.Dir(utils.DistDir))
 
 const listPath = "/list/"
 
@@ -51,24 +69,24 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
-func listFilesAndFolders(dirPath string) ([]string, []string, error) {
+func listFilesAndFolders(dirPath string) ([]File, []string, error) {
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return nil, nil, err
 	}
-	files := make([]string, 0)
+	files := make([]File, 0)
 	folders := make([]string, 0)
 	for _, entry := range entries {
 		if entry.IsDir() {
 			folders = append(folders, entry.Name())
 		} else {
-			files = append(files, entry.Name())
+			secs, _ := thumbnails.GetDuration(path.Join(dirPath, entry.Name()))
+
+			files = append(files, File{Name: entry.Name(), Duration: int(secs)})
 		}
 	}
 	return files, folders, nil
 }
-
-const filePath = "/file/"
 
 const thumbPath = "/thumb/"
 

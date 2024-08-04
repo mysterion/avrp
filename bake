@@ -35,7 +35,6 @@ elif [ "$1" = "buildffmpeg" ]; then
 
     cp -r thirdparty/ffmpeg* thirdparty/ffprobe* build/thirdparty/
     rm build/thirdparty/*.go
-    rm build/thirdparty/*.md
 
 elif [ "$1" = "testserver" ]; then
     go run test/github_server/main.go
