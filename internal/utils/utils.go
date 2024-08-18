@@ -10,12 +10,10 @@ import (
 var ConfigDir string
 var DistDir string
 var AppDir string
-var UpdateFile string
 
 var DEV bool
 
-func init() {
-	DEV = len(os.Getenv("DEV")) > 0
+func Init() {
 
 	h, err := os.UserHomeDir()
 	Panic(err)
@@ -23,6 +21,9 @@ func init() {
 	ConfigDir = filepath.Join(h, ".avrp")
 
 	DistDir = filepath.Join(ConfigDir, "dist")
+	if DEV {
+		DistDir = "."
+	}
 
 	AppDir, err = os.Executable()
 	Panic(err)
@@ -33,8 +34,6 @@ func init() {
 		AppDir, err = os.Getwd()
 		Panic(err)
 	}
-
-	UpdateFile = filepath.Join(ConfigDir, "LAST_UPDATE_CHECK")
 
 	err = os.MkdirAll(ConfigDir, 0755)
 	Panic(err)
@@ -47,7 +46,6 @@ func init() {
 		log.Printf("Config directory: %s\n", ConfigDir)
 		log.Printf("Dist directory: %s\n", DistDir)
 		log.Printf("App Run directory: %s\n", AppDir)
-		log.Printf("Update File: %s\n", UpdateFile)
 	}
 
 }

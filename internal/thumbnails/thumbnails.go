@@ -22,7 +22,7 @@ var Available = true
 
 var muGen sync.Mutex
 
-func init() {
+func Init() {
 	thumbdir = filepath.Join(utils.ConfigDir, "thumbnails")
 	err := os.MkdirAll(thumbdir, 0755)
 

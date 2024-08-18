@@ -10,15 +10,8 @@ import (
 	"path/filepath"
 
 	"github.com/mysterion/avrp/internal/thumbnails"
-	"github.com/mysterion/avrp/internal/utils"
 	"github.com/rs/cors"
 )
-
-var servDir string
-
-func Init(sd string) {
-	servDir = sd
-}
 
 type File struct {
 	Name     string `json:"name"`
@@ -37,10 +30,6 @@ func wrapCors(h http.HandlerFunc) func(http.ResponseWriter, *http.Request) {
 	}
 	return ret
 }
-
-const distPath = "/"
-
-var distHandler = http.FileServer(http.Dir(utils.DistDir))
 
 const listPath = "/list/"
 

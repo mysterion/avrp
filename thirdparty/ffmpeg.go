@@ -16,7 +16,7 @@ var FfmpegBin = ""
 // empty if ffprobe is not found in system
 var FfprobeBin = ""
 
-func init() {
+func Init() {
 
 	ffmpeg := "ffmpeg"
 	ffprobe := "ffprobe"

@@ -7,14 +7,11 @@ import (
 	"io"
 	"io/fs"
 	"log"
-	"math"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/mysterion/avrp/internal/utils"
 )
 
 type Asset struct {
@@ -39,45 +36,6 @@ func (r *Release) Version() int {
 		return 0
 	}
 	return v
-}
-
-// returns `true` if update-check was more than 7 days ago
-// or running this app for the first time
-func checkUFile() (bool, error) {
-
-	lastUpdate, err := os.ReadFile(utils.UpdateFile)
-	if errors.Is(err, fs.ErrNotExist) {
-		return true, nil
-	} else if err != nil {
-		return false, err
-	}
-
-	t, err := time.Parse(time.RFC3339, string(lastUpdate))
-	if err != nil {
-		return false, err
-	}
-
-	if t.Before(time.Now().AddDate(0, 0, -7)) {
-		return true, nil
-	}
-	return false, nil
-}
-
-func UpdateUFile() error {
-	fd, err := os.OpenFile(utils.UpdateFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		return err
-	}
-	defer fd.Close()
-
-	t := time.Now().Format(time.RFC3339)
-
-	_, err = fd.WriteString(t)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func LatestRelease() (Release, error) {
@@ -154,31 +112,11 @@ func AllReleases() ([]Release, error) {
 	return releases, nil
 }
 
-// Fetches the latest dist if no dist is found
-// or
-// Updates the existing
-func TryUpdate() {
-	tryUpdate, err := checkUFile()
+// Updates if latest version > current version
+func Update() {
 
 	v := Ver()
 	log.Printf("Current version: %v\n", v)
-
-	valid := Valid()
-	if !valid {
-		tryUpdate = true
-	} else if valid && err != nil {
-		log.Println("ERR: while checking for update", err)
-		log.Println("Skipping Update check")
-		return
-	}
-
-	if !tryUpdate {
-		return
-	}
-
-	if v == math.MaxInt {
-		return
-	}
 
 	log.Println("Checking for updates")
 
@@ -193,9 +131,6 @@ func TryUpdate() {
 
 	if v >= r.Version() {
 		log.Println("Already on the latest version")
-		if v == r.Version() {
-			utils.Panic(UpdateUFile())
-		}
 		return
 	}
 
@@ -212,6 +147,4 @@ func TryUpdate() {
 		}
 		return
 	}
-
-	utils.Panic(UpdateUFile())
 }

@@ -95,6 +95,9 @@ func Start(port int) {
 	const filePath = "/file/"
 	var fileHandler = http.StripPrefix(filePath, http.FileServer(http.Dir(servDir)))
 
+	const distPath = "/"
+	var distHandler = http.FileServer(http.Dir(utils.DistDir))
+
 	listH := listHandler
 	thumbH := thumbHandler
 

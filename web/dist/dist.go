@@ -15,8 +15,8 @@ import (
 
 var VersionFile string
 
-func init() {
-	VersionFile = filepath.Join(utils.DistDir, "version")
+func Init() {
+	VersionFile = filepath.Join(utils.ConfigDir, "VERSION")
 }
 
 // checks if dist is present
@@ -26,23 +26,15 @@ func Valid() bool {
 }
 
 func Delete() error {
-	return os.Remove(utils.DistDir)
+	return os.RemoveAll(utils.DistDir)
 }
 
 // returns 0 , when no dist
-//
-// returns math.MaxInt, when no Version file found(maybe custom version?)
 func Ver() int {
 	fd, err := os.Open(VersionFile)
 	if errors.Is(err, fs.ErrNotExist) {
-
 		log.Println("ERR: Version file doesn't exist")
-
-		if !Valid() {
-			return 0
-		}
-
-		return math.MaxInt
+		return 0
 	}
 	defer fd.Close()
 
