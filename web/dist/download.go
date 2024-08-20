@@ -2,36 +2,19 @@ package dist
 
 import (
 	"archive/zip"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/mysterion/avrp/internal/utils"
 )
 
-func DownloadRelease(r Release) error {
+func DownloadTag(t Tag) error {
 
-	if len(r.Assets) == 0 {
-		log.Fatal("Nothing to download in the latest release.")
-	}
-
-	var url string
-
-	for _, a := range r.Assets {
-		if strings.Contains(a.BrowserDownloadUrl, "dist") &&
-			strings.HasSuffix(a.BrowserDownloadUrl, ".zip") {
-			url = a.BrowserDownloadUrl
-		}
-	}
-
-	if len(r.Assets) == 0 {
-		log.Fatal("dist.zip not found in release.")
-	}
-
-	log.Printf("Latest Release - %v - %v\n", r.Tag, url)
+	log.Printf("Latest Release - %v - %v\n", t.Name, t.ZipballUrl)
 
 	zipFile, err := os.CreateTemp("", "avrp-latest")
 	if err != nil {
@@ -41,7 +24,7 @@ func DownloadRelease(r Release) error {
 
 	log.Println("Downloading to - ", zipFile.Name())
 
-	resp, err := http.Get(url)
+	resp, err := http.Get(t.ZipballUrl)
 	if err != nil {
 		return err
 	}
@@ -52,13 +35,13 @@ func DownloadRelease(r Release) error {
 		return err
 	}
 
-	err = extractZip(zipFile.Name(), utils.DistDir)
+	err = extractZip(t, zipFile.Name())
 	if err != nil {
 		log.Println("ERR: Failed to extract the zip")
 		return err
 	}
 
-	err = os.WriteFile(VersionFile, []byte(r.Tag), 0644)
+	err = os.WriteFile(VersionFile, []byte(t.Name), 0644)
 
 	if err != nil {
 		log.Println("ERR: Failed to write version file")
@@ -72,22 +55,24 @@ func DownloadRelease(r Release) error {
 	return nil
 }
 
-func extractZip(srcZip string, dst string) error {
-	log.Printf("Extracting %v to %v\n", srcZip, dst)
+func extractZip(t Tag, srcZip string) error {
+	// extracts ~/.avrp/<release-folder-sha>
+	// renames ~/.avrp/<release-folder-sha> to ~/.avrp/dist
+	log.Printf("Extracting %v", srcZip)
 	r, err := zip.OpenReader(srcZip)
 	if err != nil {
 		return err
 	}
 	defer r.Close()
 
-	err = os.MkdirAll(dst, 0755)
+	err = os.MkdirAll(utils.ConfigDir, 0755)
 	if err != nil {
 		return err
 	}
 
 	for _, f := range r.File {
 		fi := f.FileInfo()
-		target := filepath.Join(dst, f.Name)
+		target := filepath.Join(utils.ConfigDir, f.Name)
 		log.Println("Extracting - ", target)
 		if !fi.IsDir() {
 			err := os.MkdirAll(filepath.Dir(target), 0755)
@@ -112,5 +97,20 @@ func extractZip(srcZip string, dst string) error {
 			}
 		}
 	}
+
+	if !utils.DEV {
+		err = os.RemoveAll(utils.DistDir)
+		if err != nil {
+			return err
+		}
+	}
+
+	newDist := filepath.Join(utils.ConfigDir, fmt.Sprintf("%s-%s-%s", RepoOwner, RepoName, t.Commit.Sha[:7]))
+
+	err = os.Rename(newDist, utils.DistDir)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

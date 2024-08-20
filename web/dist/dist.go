@@ -13,6 +13,9 @@ import (
 	"github.com/mysterion/avrp/internal/utils"
 )
 
+const RepoOwner = "mysterion"
+const RepoName = "aframe-vr-player"
+
 var VersionFile string
 
 func Init() {
