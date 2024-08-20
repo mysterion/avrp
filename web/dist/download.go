@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/mysterion/avrp/internal/utils"
 )
@@ -56,8 +57,7 @@ func DownloadTag(t Tag) error {
 }
 
 func extractZip(t Tag, srcZip string) error {
-	// extracts ~/.avrp/<release-folder-sha>
-	// renames ~/.avrp/<release-folder-sha> to ~/.avrp/dist
+
 	log.Printf("Extracting %v", srcZip)
 	r, err := zip.OpenReader(srcZip)
 	if err != nil {
@@ -70,9 +70,11 @@ func extractZip(t Tag, srcZip string) error {
 		return err
 	}
 
+	folderName := fmt.Sprintf("%s-%s-%s", RepoOwner, RepoName, t.Commit.Sha[:7])
+
 	for _, f := range r.File {
 		fi := f.FileInfo()
-		target := filepath.Join(utils.ConfigDir, f.Name)
+		target := filepath.Join(utils.ConfigDir, strings.Replace(f.Name, folderName, "dist", 1))
 		log.Println("Extracting - ", target)
 		if !fi.IsDir() {
 			err := os.MkdirAll(filepath.Dir(target), 0755)
@@ -96,20 +98,6 @@ func extractZip(t Tag, srcZip string) error {
 				return err
 			}
 		}
-	}
-
-	if !utils.DEV {
-		err = os.RemoveAll(utils.DistDir)
-		if err != nil {
-			return err
-		}
-	}
-
-	newDist := filepath.Join(utils.ConfigDir, fmt.Sprintf("%s-%s-%s", RepoOwner, RepoName, t.Commit.Sha[:7]))
-
-	err = os.Rename(newDist, utils.DistDir)
-	if err != nil {
-		return err
 	}
 
 	return nil
