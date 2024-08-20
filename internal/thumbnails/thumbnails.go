@@ -51,7 +51,7 @@ func GetDuration(file string) (float64, error) {
 		cmd := exec.Command(thirdparty.FfprobeBin, args...)
 		stdout, err := cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("ERR - Failed to get Duration - %v\nSTDOUT:\n%s\n", err, stdout)
+			log.Printf("ERR - Failed to get Duration for %v - %v\nSTDOUT:\n%s\n", file, err, stdout)
 			stdout = []byte("0")
 		}
 		secs = strings.TrimSpace(string(stdout))

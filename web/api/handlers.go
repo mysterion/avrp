@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/mysterion/avrp/internal/thumbnails"
+	"github.com/mysterion/avrp/internal/utils"
 	"github.com/rs/cors"
 )
 
@@ -69,6 +70,9 @@ func listFilesAndFolders(dirPath string) ([]File, []string, error) {
 		if entry.IsDir() {
 			folders = append(folders, entry.Name())
 		} else {
+			if !utils.IsVideo(entry.Name()) {
+				continue
+			}
 			secs, _ := thumbnails.GetDuration(path.Join(dirPath, entry.Name()))
 
 			files = append(files, File{Name: entry.Name(), Duration: int(secs)})
