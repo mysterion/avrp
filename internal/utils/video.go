@@ -37,6 +37,7 @@ var exts = []string{
 	"webm",
 	"wmv",
 	"yuv",
+	"srt",
 }
 
 func IsVideo(file string) bool {
