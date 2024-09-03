@@ -43,11 +43,13 @@ func main() {
 	log.SetFlags(log.Lshortfile | log.LstdFlags)
 
 	var servDir string
+	var sha string
 	var update bool
 	var reset bool
 
 	flag.BoolVar(&utils.DEV, "dev", false, "starts in dev mode, serves 'index.html' from current directory")
-	flag.BoolVar(&update, "update", false, "checks & downloads the latest version of 'aframe-vr-player'")
+	flag.BoolVar(&update, "update", false, "checks & downloads the latest version(commit) of 'aframe-vr-player'")
+	flag.StringVar(&sha, "sha", "latest", "Optional - download a specific commit of aframe-vr-player")
 	flag.StringVar(&servDir, "dir", "", "path to video files")
 	flag.BoolVar(&reset, "reset", false, "removes all configs, thumbnails & 'aframe-vr-player' files")
 
@@ -69,7 +71,7 @@ func main() {
 	}
 
 	if update {
-		dist.Update()
+		dist.Update(sha)
 	}
 
 	/// do i need this anymore?
@@ -77,7 +79,7 @@ func main() {
 
 	// running for the first time
 	if !dist.Valid() && !utils.DEV {
-		dist.Update()
+		dist.Update("latest")
 	}
 
 	if len(servDir) == 0 {

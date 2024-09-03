@@ -13,11 +13,12 @@ import (
 	"github.com/mysterion/avrp/internal/utils"
 )
 
-func DownloadTag(t Tag) error {
+func DownloadCommit(sha string) error {
 
-	log.Printf("Latest Release - %v - %v\n", t.Name, t.ZipballUrl)
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/zipball/%s", RepoOwner, RepoName, sha)
+	log.Printf("Downloading - %v\n", url)
 
-	zipFile, err := os.CreateTemp("", "avrp-latest")
+	zipFile, err := os.CreateTemp("", "aframe-vr-player")
 	if err != nil {
 		return err
 	}
@@ -25,7 +26,7 @@ func DownloadTag(t Tag) error {
 
 	log.Println("Downloading to - ", zipFile.Name())
 
-	resp, err := http.Get(t.ZipballUrl)
+	resp, err := http.Get(url)
 	if err != nil {
 		return err
 	}
@@ -36,13 +37,13 @@ func DownloadTag(t Tag) error {
 		return err
 	}
 
-	err = extractZip(t, zipFile.Name())
+	err = extractZip(sha, zipFile.Name())
 	if err != nil {
 		log.Println("ERR: Failed to extract the zip")
 		return err
 	}
 
-	err = os.WriteFile(VersionFile, []byte(t.Name), 0644)
+	err = os.WriteFile(VersionFile, []byte(sha), 0644)
 
 	if err != nil {
 		log.Println("ERR: Failed to write version file")
@@ -56,7 +57,7 @@ func DownloadTag(t Tag) error {
 	return nil
 }
 
-func extractZip(t Tag, srcZip string) error {
+func extractZip(sha string, srcZip string) error {
 
 	log.Printf("Extracting %v", srcZip)
 	r, err := zip.OpenReader(srcZip)
@@ -70,7 +71,7 @@ func extractZip(t Tag, srcZip string) error {
 		return err
 	}
 
-	folderName := fmt.Sprintf("%s-%s-%s", RepoOwner, RepoName, t.Commit.Sha[:7])
+	folderName := fmt.Sprintf("%s-%s-%s", RepoOwner, RepoName, sha[:7])
 
 	for _, f := range r.File {
 		fi := f.FileInfo()

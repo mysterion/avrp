@@ -1,6 +1,7 @@
 package thumbnails
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"math"
@@ -17,6 +18,8 @@ import (
 )
 
 var thumbdir string
+
+var ErrNotVideo = errors.New("not a video")
 
 var Available = true
 
@@ -38,6 +41,9 @@ func Init() {
 }
 
 func GetDuration(file string) (float64, error) {
+	if !utils.IsVideo(file) {
+		return 0, ErrNotVideo
+	}
 	var secs string
 	secs = cache.Get("DUR_" + file)
 	if secs == "" {

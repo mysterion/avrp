@@ -1,20 +1,12 @@
 package dist
 
 import (
-	"errors"
-	"io/fs"
 	"log"
-	"math"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
 
 	"github.com/mysterion/avrp/internal/utils"
 )
-
-const RepoOwner = "mysterion"
-const RepoName = "aframe-vr-player"
 
 var VersionFile string
 
@@ -32,26 +24,14 @@ func Delete() error {
 	return os.RemoveAll(utils.DistDir)
 }
 
-// returns 0 , when no dist
-func Ver() int {
-	fd, err := os.Open(VersionFile)
-	if errors.Is(err, fs.ErrNotExist) {
-		log.Println("ERR: Version file doesn't exist")
-		return 0
-	}
-	defer fd.Close()
+// returns sha of aframe-vr-player dist
+func Ver() string {
+	d, err := os.ReadFile(VersionFile)
 
-	d := make([]byte, 1024)
-	n, err := fd.Read(d)
 	if err != nil {
-		return math.MaxInt
+		log.Printf("WARN: while reading dist version, %v\n", err.Error())
+		return ""
 	}
 
-	vs := strings.ReplaceAll(string(d[:n]), ".", "")
-	v, err := strconv.Atoi(vs)
-	if err != nil {
-		return math.MaxInt
-	}
-
-	return v
+	return string(d)
 }

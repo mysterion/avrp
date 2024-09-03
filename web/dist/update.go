@@ -8,110 +8,142 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
-	"os"
-	"strconv"
-	"strings"
+	"time"
 )
 
+const RepoOwner = "mysterion"
+const RepoName = "aframe-vr-player"
+
+// curl https://api.github.com/repos/mysterion/aframe-vr-player/commits?per_page=1
 type Commit struct {
-	Sha string `json:"sha"`
-	Url string `json:"url"`
+	Sha     string        `json:"sha"`
+	Details CommitDetails `json:"commit"`
 }
 
-type Tag struct {
-	Name       string `json:"name"`
-	ZipballUrl string `json:"zipball_url"`
-	TarballUrl string `json:"tarball_url"`
-	Commit     Commit `json:"commit"`
-	NodeId     string `json:"node_id"`
+type CommitDetails struct {
+	Sha    string `json:"sha"`
+	Author struct {
+		Name string    `json:"name"`
+		Date time.Time `json:"date"`
+	} `json:"author"`
+	Message string `json:"message"`
 }
 
-func (t *Tag) Version() int {
-	vs := strings.ReplaceAll(t.Name, ".", "")
-	v, err := strconv.Atoi(vs)
-	if err != nil {
-		return 0
-	}
-	return v
-}
+func GetLatestCommit() (Commit, error) {
 
-func LatestTag() (Tag, error) {
-	tags, err := AllTags()
-	if err != nil {
-		return Tag{}, err
-	}
-	return tags[0], nil
-}
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/commits?per_page=1", RepoOwner, RepoName)
 
-func AllTags() ([]Tag, error) {
-
-	url := os.Getenv("URL_ALL_RELEASES")
-	if url == "" {
-		url = fmt.Sprintf("https://api.github.com/repos/%s/%s/tags", RepoOwner, RepoName)
-	}
-
-	var tags []Tag
+	var commit Commit
+	var commits []Commit
 
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return tags, err
+		return commit, err
 	}
 
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return tags, err
+		return commit, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return tags, err
+		return commit, err
 	}
-
-	err = json.Unmarshal(body, &tags)
+	err = json.Unmarshal(body, &commits)
 	if err != nil {
-		return tags, err
+		return commit, err
 	}
-
-	return tags, err
+	if len(commits) < 1 {
+		return commit, fmt.Errorf("No commits found 🤨")
+	}
+	return commits[0], err
 }
 
-// Updates if latest version > current version
-func Update() {
+func GetCommit(sha string) (CommitDetails, error) {
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/git/commits/%s", RepoOwner, RepoName, sha)
 
-	v := Ver()
-	log.Printf("Current version: %v\n", v)
+	var commit CommitDetails
 
-	log.Println("Checking for updates")
-
-	t, err := LatestTag()
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Println("ERR: Failed to fetch latest Release", err)
-		log.Println("Skipping Update check")
-		return
+		return commit, err
 	}
 
-	log.Printf("Latest release: %v, v:%v\n", t.Name, t.Version())
+	req.Header.Set("Accept", "application/json")
 
-	if v >= t.Version() {
-		log.Println("Already on the latest version")
-		return
+	resp, err := client.Do(req)
+	if err != nil {
+		return commit, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return commit, err
+	}
+	err = json.Unmarshal(body, &commit)
+	if err != nil {
+		return commit, err
+	}
+	return commit, nil
+}
+
+func Update(sha string) error {
+
+	if sha == "latest" {
+		v := Ver()
+		log.Printf("Current version: %v\n", v)
+		log.Println("Checking for updates")
+		c, err := GetLatestCommit()
+		if err != nil {
+			log.Println("ERR: Failed to fetch latest version", err)
+			return err
+		}
+
+		log.Printf("Commit Details :-\n\nDate: %v\nMessage:\n%v\n\n", c.Details.Author.Date, c.Details.Message)
+
+		if Valid() {
+			if v == c.Sha {
+				o := "this"
+				if sha == "latest" {
+					o = "the latest"
+				}
+				log.Printf("Already on %s version\n", o)
+				return nil
+			}
+		}
+
+		sha = c.Sha
+
+	} else {
+		c, err := GetCommit(sha)
+		if err != nil {
+			log.Printf("ERR: Failed to get %s of aframe-vr-player\n", sha)
+			log.Printf("ERR: %v\n", err.Error())
+			return err
+		}
+		log.Println(c, err)
+		log.Printf("Commit Details :-\n\nDate: %v\nMessage:\n%v\n\n", c.Author.Date, c.Message)
 	}
 
-	log.Println("Downloading the latest version")
+	fmt.Println("\n\nPress Enter to update")
+	fmt.Scanln()
 
-	err = DownloadTag(t)
+	err := DownloadCommit(sha)
 	if err != nil {
 		log.Println("ERR: Failed to fetch latest Release", err)
-		log.Println("Skipping Update check")
 		if !Valid() {
 			if err := Delete(); errors.Is(err, fs.ErrNotExist) {
 				panic(err)
 			}
 		}
-		return
+		return err
 	}
+	return nil
 }

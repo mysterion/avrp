@@ -1,8 +1,10 @@
 package utils
 
-import "strings"
+import (
+	"strings"
+)
 
-var exts = []string{
+var video = []string{
 	"3g2",
 	"3gp",
 	"aaf",
@@ -37,12 +39,30 @@ var exts = []string{
 	"webm",
 	"wmv",
 	"yuv",
+}
+
+var subs = []string{
 	"srt",
+}
+
+func CanServe(file string) bool {
+	f := strings.ToLower(file)
+	for _, e := range video {
+		if strings.HasSuffix(f, e) {
+			return true
+		}
+	}
+	for _, e := range subs {
+		if strings.HasSuffix(f, e) {
+			return true
+		}
+	}
+	return false
 }
 
 func IsVideo(file string) bool {
 	f := strings.ToLower(file)
-	for _, e := range exts {
+	for _, e := range video {
 		if strings.HasSuffix(f, e) {
 			return true
 		}

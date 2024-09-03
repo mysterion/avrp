@@ -70,9 +70,10 @@ func listFilesAndFolders(dirPath string) ([]File, []string, error) {
 		if entry.IsDir() {
 			folders = append(folders, entry.Name())
 		} else {
-			if !utils.IsVideo(entry.Name()) {
+			if !utils.CanServe(entry.Name()) {
 				continue
 			}
+
 			secs, _ := thumbnails.GetDuration(path.Join(dirPath, entry.Name()))
 
 			files = append(files, File{Name: entry.Name(), Duration: int(secs)})
