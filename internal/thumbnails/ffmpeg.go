@@ -53,7 +53,7 @@ func latestFfmpeg() (release, error) {
 	repoName := "codexffmpeg"
 	var r release
 
-	url := fmt.Sprintf(" https://api.github.com/repos/%s/%s/releases/latest", repoOwner, repoName)
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", repoOwner, repoName)
 
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
@@ -189,9 +189,8 @@ func extractFfmpeg(zipName string, zipPath string) error {
 }
 
 func promptDownloadFfmpeg() bool {
-	fmt.Println("\n\n")
-	fmt.Println("ffmpeg is required to show thumbnails in aframe-vr-player")
-	fmt.Print("Download ffmpeg? \"yes\" or\"no\": ")
+	fmt.Println("\nffmpeg is required to show thumbnails in aframe-vr-player")
+	fmt.Print("Download ffmpeg? \"yes\" or \"no\": ")
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	ans := strings.ToLower(strings.TrimSpace(scanner.Text()))
@@ -212,7 +211,7 @@ func CheckFfmpegInPath() (bool, string, string) {
 
 	ffprobePath, err2 := exec.LookPath(ffprobe)
 
-	return err1 != nil || err2 != nil, ffmpegPath, ffprobePath
+	return err1 == nil && err2 == nil, ffmpegPath, ffprobePath
 }
 
 func CheckFfmpeg() (bool, string, string) {
@@ -231,7 +230,7 @@ func CheckFfmpeg() (bool, string, string) {
 	_, err1 := os.Stat(ffmpegPath)
 	_, err2 := os.Stat(ffprobePath)
 
-	return err1 != nil || err2 != nil, ffmpegPath, ffprobePath
+	return err1 == nil && err2 == nil, ffmpegPath, ffprobePath
 }
 
 func NoFfmpegFileCreate() {

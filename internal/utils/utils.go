@@ -59,9 +59,6 @@ func Panic(err error) {
 	}
 }
 
-func GoRunGatekeeper() {
-	if strings.HasPrefix(AppDir, filepath.Join(os.TempDir(), "go-build")) {
-		panic("MAYBE YOU FORGOT DEV=1 ? I'M NOT LETTING YOU RUN STUFF FROM TEMP DIRECTORY")
-	}
-
+func IsGoRun() bool {
+	return strings.HasPrefix(AppDir, filepath.Join(os.TempDir(), "go-build"))
 }

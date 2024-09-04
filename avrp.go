@@ -9,10 +9,10 @@ import (
 	"log"
 	"os"
 
+	"github.com/mysterion/avrp/internal/dist"
+	"github.com/mysterion/avrp/internal/server"
 	"github.com/mysterion/avrp/internal/thumbnails"
 	"github.com/mysterion/avrp/internal/utils"
-	"github.com/mysterion/avrp/web/api"
-	"github.com/mysterion/avrp/web/dist"
 )
 
 func isPathValid(path string) bool {
@@ -45,18 +45,42 @@ func main() {
 	var sha string
 	var update bool
 	var reset bool
+	var port int
+	var getFfmpeg bool
+	var noThumb bool
 
 	flag.BoolVar(&utils.DEV, "dev", false, "starts in dev mode, serves 'index.html' from current directory")
 	flag.BoolVar(&update, "update", false, "checks & downloads the latest version(commit) of 'aframe-vr-player'")
 	flag.StringVar(&sha, "sha", "latest", "Optional - download a specific commit of aframe-vr-player")
 	flag.StringVar(&servDir, "dir", "", "path to video files")
 	flag.BoolVar(&reset, "reset", false, "removes all configs, thumbnails & 'aframe-vr-player' files")
+	flag.IntVar(&port, "port", 5000, "port to serve on (default 5000)")
+	flag.BoolVar(&getFfmpeg, "get-ffmpeg", false, "downloads ffmpeg")
+	flag.BoolVar(&noThumb, "no-thumb", false, "disables thumbnail generation")
 
 	flag.Parse()
 
 	utils.Init()
 	dist.Init()
 	thumbnails.Init()
+
+	// commands 👇
+
+	if getFfmpeg {
+		utils.Panic(thumbnails.DownloadFfmpeg())
+		return
+	}
+
+	if noThumb {
+		if thumbnails.NoFfmpeg() {
+			thumbnails.NoFfmpegFileRemove()
+			log.Println("thumbnail generation enabled👍")
+		} else {
+			thumbnails.NoFfmpegFileCreate()
+			log.Println("thumbnail generation disabled👎")
+		}
+		return
+	}
 
 	if reset {
 		err := os.RemoveAll(utils.ConfigDir)
@@ -70,10 +94,10 @@ func main() {
 
 	if update {
 		dist.Update(sha)
+		return
 	}
 
-	/// do i need this anymore?
-	utils.GoRunGatekeeper()
+	// commands 👆
 
 	// running for the first time
 	if !dist.Valid() && !utils.DEV {
@@ -88,6 +112,6 @@ func main() {
 		}
 	}
 
-	api.Init(servDir)
-	api.Start(5000)
+	server.Init(servDir)
+	server.Start(port)
 }

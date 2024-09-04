@@ -24,17 +24,6 @@ var Available = false
 
 var muGen sync.Mutex
 
-// checks if noffmpeg is OFF
-// --checks in path
-// --checks in .avrp
-// --if present available true // FIN
-
-// --if not present
-// --shows user noffmpeg info and how to disable ffmpeg download
-// ----downloads if not present
-// ----panics if any error
-// ----checks again in .avrp
-// ----available=true // FIN
 func Init() {
 	noffmpegfile = filepath.Join(utils.ConfigDir, "noffmpeg")
 
@@ -70,8 +59,10 @@ func Init() {
 	}
 
 	accept := promptDownloadFfmpeg()
+
 	if !accept {
 		fmt.Printf("\n\nYou can disable this message, by running: avrp --no-thumb\n\n")
+		return
 	}
 
 	utils.Panic(DownloadFfmpeg())
@@ -83,7 +74,6 @@ func Init() {
 	} else {
 		log.Println("Something went wrong, please re-download ffmpeg: avrp --get-ffmpeg")
 	}
-
 }
 
 func GetDuration(file string) (float64, error) {
