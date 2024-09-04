@@ -9,10 +9,6 @@ import (
 	"github.com/mysterion/avrp/internal/cache"
 )
 
-func logg(args ...string) {
-
-}
-
 func Hash(file string) (string, error) {
 
 	c := cache.Get("HASH_" + file)

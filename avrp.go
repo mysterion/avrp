@@ -11,7 +11,6 @@ import (
 
 	"github.com/mysterion/avrp/internal/thumbnails"
 	"github.com/mysterion/avrp/internal/utils"
-	"github.com/mysterion/avrp/thirdparty"
 	"github.com/mysterion/avrp/web/api"
 	"github.com/mysterion/avrp/web/dist"
 )
@@ -57,7 +56,6 @@ func main() {
 
 	utils.Init()
 	dist.Init()
-	thirdparty.Init()
 	thumbnails.Init()
 
 	if reset {

@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -51,7 +52,9 @@ func Init() {
 }
 
 func Panic(err error) {
+	_, filename, lno, _ := runtime.Caller(1)
 	if err != nil {
+		log.Printf("Panic call from : %v:%v\n", filename, lno)
 		panic(err)
 	}
 }
