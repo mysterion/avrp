@@ -52,6 +52,5 @@ avrp --update --sha 6d1b7cfacfd873180e80fde53cb2a7873e1faffc
 go install github.com/mysterion/avrp@latest
 ```
 ## standalone binary
-Download the `with-ffmpeg` version for the thumbnails feature
 [https://github.com/mysterion/avrp/releases](https://github.com/mysterion/avrp/releases)
 
