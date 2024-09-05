@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -51,14 +52,13 @@ func Init() {
 }
 
 func Panic(err error) {
+	_, filename, lno, _ := runtime.Caller(1)
 	if err != nil {
+		log.Printf("Panic call from : %v:%v\n", filename, lno)
 		panic(err)
 	}
 }
 
-func GoRunGatekeeper() {
-	if strings.HasPrefix(AppDir, filepath.Join(os.TempDir(), "go-build")) {
-		panic("MAYBE YOU FORGOT DEV=1 ? I'M NOT LETTING YOU RUN STUFF FROM TEMP DIRECTORY")
-	}
-
+func IsGoRun() bool {
+	return strings.HasPrefix(AppDir, filepath.Join(os.TempDir(), "go-build"))
 }

@@ -14,35 +14,71 @@ import (
 
 	"github.com/mysterion/avrp/internal/cache"
 	"github.com/mysterion/avrp/internal/utils"
-	"github.com/mysterion/avrp/thirdparty"
 )
 
 var thumbdir string
 
-var ErrNotVideo = errors.New("not a video")
+var ErrUnavailable = errors.New("not available")
 
-var Available = true
+var Available = false
 
 var muGen sync.Mutex
 
 func Init() {
+	noffmpegfile = filepath.Join(utils.ConfigDir, "noffmpeg")
+
 	thumbdir = filepath.Join(utils.ConfigDir, "thumbnails")
 	err := os.MkdirAll(thumbdir, 0755)
-
 	if err != nil {
-		log.Printf("Thumbnails not available - %v\n", err)
-		Available = false
+		log.Printf("ERR: Thumbnails not available - %v\n", err)
+		return
 	}
 
-	if thirdparty.FfmpegBin == "" || thirdparty.FfprobeBin == "" {
-		log.Printf("Thumbnails not available - ffmpeg not found\n")
-		Available = false
+	ffmpegDir = filepath.Join(utils.ConfigDir, "ffmpeg")
+	err = os.MkdirAll(ffmpegDir, 0755)
+	if err != nil {
+		log.Printf("ERR: Thumbnails not available - %v\n", err)
+		return
+	}
+
+	if NoFfmpeg() {
+		return
+	}
+
+	var found = false
+	found, binFfmpeg, binFfprobe = CheckFfmpegInPath()
+	if found {
+		Available = true
+		return
+	}
+
+	found, binFfmpeg, binFfprobe = CheckFfmpeg()
+	if found {
+		Available = true
+		return
+	}
+
+	accept := promptDownloadFfmpeg()
+
+	if !accept {
+		fmt.Printf("\n\nYou can disable this message, by running: avrp --no-thumb\n\n")
+		return
+	}
+
+	utils.Panic(DownloadFfmpeg())
+
+	found, binFfmpeg, binFfprobe = CheckFfmpeg()
+	if found {
+		Available = true
+		return
+	} else {
+		log.Println("Something went wrong, please re-download ffmpeg: avrp --get-ffmpeg")
 	}
 }
 
 func GetDuration(file string) (float64, error) {
-	if !utils.IsVideo(file) {
-		return 0, ErrNotVideo
+	if !utils.IsVideo(file) || !Available {
+		return 0, ErrUnavailable
 	}
 	var secs string
 	secs = cache.Get("DUR_" + file)
@@ -54,7 +90,7 @@ func GetDuration(file string) (float64, error) {
 			"-of", "default=noprint_wrappers=1:nokey=1",
 			file,
 		}
-		cmd := exec.Command(thirdparty.FfprobeBin, args...)
+		cmd := exec.Command(binFfprobe, args...)
 		stdout, err := cmd.CombinedOutput()
 		if err != nil {
 			log.Printf("ERR - Failed to get Duration for %v - %v\nSTDOUT:\n%s\n", file, err, stdout)
@@ -69,6 +105,10 @@ func GetDuration(file string) (float64, error) {
 }
 
 func Generated(file string) bool {
+
+	if !Available {
+		return false
+	}
 
 	h, err := Hash(file)
 
@@ -91,6 +131,9 @@ func Generated(file string) bool {
 
 // TODO: keep error state for a particular file with eviction policy
 func Generate(file string) {
+	if !Available {
+		return
+	}
 	muGen.Lock()
 	defer muGen.Unlock()
 	if Generated(file) {
@@ -129,8 +172,7 @@ func Generate(file string) {
 				"-vf", "crop=in_w/2:in_h/2:in_w:in_h/4,scale=320:-1",
 				filepath.Join(outDir, fmt.Sprintf("%v.jpg", i)),
 			}
-			cmd := exec.Command(thirdparty.FfmpegBin, cmdArgs...)
-			log.Println("EXEC - ", thirdparty.FfmpegBin, cmdArgs)
+			cmd := exec.Command(binFfmpeg, cmdArgs...)
 			stdout, err := cmd.CombinedOutput()
 			if err != nil {
 				log.Printf("ERR while generating thumbnail %vth for %v - %v\nSTDOUT:\n%v\n", i, file, err, string(stdout))
@@ -146,6 +188,9 @@ func Generate(file string) {
 }
 
 func Get(id string, file string) (string, error) {
+	if !Available {
+		return "", ErrUnavailable
+	}
 	h, err := Hash(file)
 	if err != nil {
 		return "", err

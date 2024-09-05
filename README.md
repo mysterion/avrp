@@ -8,6 +8,12 @@ Usage of avrp:
         starts in dev mode, serves 'index.html' from current directory
   -dir string
         path to video files
+  -get-ffmpeg
+        downloads ffmpeg
+  -no-thumb
+        disables thumbnail generation
+  -port int
+        port to serve on (default 5000) (default 5000)
   -reset
         removes all configs, thumbnails & 'aframe-vr-player' files
   -sha string
