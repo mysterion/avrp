@@ -18,7 +18,7 @@ import (
 
 var thumbdir string
 
-var ErrNotVideo = errors.New("not a video")
+var ErrUnavailable = errors.New("not available")
 
 var Available = false
 
@@ -77,8 +77,8 @@ func Init() {
 }
 
 func GetDuration(file string) (float64, error) {
-	if !utils.IsVideo(file) {
-		return 0, ErrNotVideo
+	if !utils.IsVideo(file) || !Available {
+		return 0, ErrUnavailable
 	}
 	var secs string
 	secs = cache.Get("DUR_" + file)
@@ -106,6 +106,10 @@ func GetDuration(file string) (float64, error) {
 
 func Generated(file string) bool {
 
+	if !Available {
+		return false
+	}
+
 	h, err := Hash(file)
 
 	if err != nil {
@@ -127,6 +131,9 @@ func Generated(file string) bool {
 
 // TODO: keep error state for a particular file with eviction policy
 func Generate(file string) {
+	if !Available {
+		return
+	}
 	muGen.Lock()
 	defer muGen.Unlock()
 	if Generated(file) {
@@ -181,6 +188,9 @@ func Generate(file string) {
 }
 
 func Get(id string, file string) (string, error) {
+	if !Available {
+		return "", ErrUnavailable
+	}
 	h, err := Hash(file)
 	if err != nil {
 		return "", err

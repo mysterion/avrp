@@ -22,7 +22,7 @@ import (
 
 var (
 	ErrNotImpl    = errors.New("not implemented")
-	ErrNoDownload = errors.New("no download found in the latest release.")
+	ErrNoDownload = errors.New("no download found in the latest release")
 )
 
 var (
@@ -105,6 +105,7 @@ func DownloadFfmpeg() error {
 		if strings.Contains(a.BrowserDownloadUrl, "essentials") &&
 			strings.HasSuffix(a.BrowserDownloadUrl, ".zip") {
 			url = a.BrowserDownloadUrl
+			break
 		}
 	}
 
@@ -141,6 +142,10 @@ func DownloadFfmpeg() error {
 	}
 
 	log.Println("Extracted successfully")
+
+	if NoFfmpeg() {
+		NoFfmpegFileRemove()
+	}
 
 	return nil
 
