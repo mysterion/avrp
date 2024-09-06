@@ -8,9 +8,18 @@ import (
 	"strings"
 )
 
-var ConfigDir string
-var DistDir string
-var AppDir string
+var (
+	ConfigDir string
+	DistDir   string
+	AppDir    string
+	FfmpegDir string
+	ThumbDir  string
+)
+
+var (
+	NoThumbFile string
+	VersionFile string
+)
 
 var DEV bool
 
@@ -20,6 +29,14 @@ func Init() {
 	Panic(err)
 
 	ConfigDir = filepath.Join(h, ".avrp")
+
+	FfmpegDir = filepath.Join(ConfigDir, "ffmpeg")
+
+	ThumbDir = filepath.Join(ConfigDir, "thumbnails")
+
+	NoThumbFile = filepath.Join(ConfigDir, "nothumb")
+
+	VersionFile = filepath.Join(ConfigDir, "VERSION")
 
 	DistDir = filepath.Join(ConfigDir, "dist")
 	if DEV {
@@ -36,11 +53,13 @@ func Init() {
 		Panic(err)
 	}
 
-	err = os.MkdirAll(ConfigDir, 0755)
-	Panic(err)
+	Panic(os.MkdirAll(ConfigDir, 0755))
 
-	err = os.MkdirAll(DistDir, 0755)
-	Panic(err)
+	Panic(os.MkdirAll(DistDir, 0755))
+
+	Panic(os.MkdirAll(FfmpegDir, 0755))
+
+	Panic(os.MkdirAll(ThumbDir, 0755))
 
 	if DEV {
 		log.Printf("Home directory: %s\n", h)

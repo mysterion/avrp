@@ -56,27 +56,24 @@ func main() {
 	flag.BoolVar(&reset, "reset", false, "removes all configs, thumbnails & 'aframe-vr-player' files")
 	flag.IntVar(&port, "port", 5000, "port to serve on (default 5000)")
 	flag.BoolVar(&getFfmpeg, "get-ffmpeg", false, "downloads ffmpeg")
-	flag.BoolVar(&noThumb, "no-thumb", false, "disables thumbnail generation")
+	flag.BoolVar(&noThumb, "no-thumb", false, "disable/enable thumbnail generation")
 
 	flag.Parse()
 
 	utils.Init()
-	dist.Init()
-	thumbnails.Init()
 
 	// commands 👇
-
 	if getFfmpeg {
 		utils.Panic(thumbnails.DownloadFfmpeg())
 		return
 	}
 
 	if noThumb {
-		if thumbnails.NoFfmpeg() {
-			thumbnails.NoFfmpegFileRemove()
+		if thumbnails.NoThumb() {
+			thumbnails.NoThumbFileRemove()
 			log.Println("thumbnail generation enabled👍")
 		} else {
-			thumbnails.NoFfmpegFileCreate()
+			thumbnails.NoThumbFileCreate()
 			log.Println("thumbnail generation disabled👎")
 		}
 		return
@@ -96,7 +93,6 @@ func main() {
 		dist.Update(sha)
 		return
 	}
-
 	// commands 👆
 
 	// running for the first time
@@ -112,6 +108,7 @@ func main() {
 		}
 	}
 
+	thumbnails.Init()
 	server.Init(servDir)
 	server.Start(port)
 }

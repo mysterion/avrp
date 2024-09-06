@@ -43,7 +43,7 @@ func DownloadCommit(sha string) error {
 		return err
 	}
 
-	err = os.WriteFile(VersionFile, []byte(sha), 0644)
+	err = os.WriteFile(utils.VersionFile, []byte(sha), 0644)
 
 	if err != nil {
 		log.Println("ERR: Failed to write version file")

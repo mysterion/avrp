@@ -30,11 +30,6 @@ var (
 	binFfprobe string
 )
 
-var (
-	noffmpegfile string
-	ffmpegDir    = ""
-)
-
 type release struct {
 	ID     int    `json:"id"`
 	Name   string `json:"name"`
@@ -143,8 +138,8 @@ func DownloadFfmpeg() error {
 
 	log.Println("Extracted successfully")
 
-	if NoFfmpeg() {
-		NoFfmpegFileRemove()
+	if NoThumb() {
+		NoThumbFileRemove()
 	}
 
 	return nil
@@ -202,7 +197,11 @@ func promptDownloadFfmpeg() bool {
 	return ans == "yes"
 }
 
-func CheckFfmpegInPath() (bool, string, string) {
+func initFfmpeg() bool {
+
+	if NoThumb() {
+		return false
+	}
 
 	ffmpeg := "ffmpeg"
 	ffprobe := "ffprobe"
@@ -212,43 +211,56 @@ func CheckFfmpegInPath() (bool, string, string) {
 		ffprobe += ".exe"
 	}
 
-	ffmpegPath, err1 := exec.LookPath(ffmpeg)
+	var err1, err2 error
 
-	ffprobePath, err2 := exec.LookPath(ffprobe)
+	binFfmpeg, err1 = exec.LookPath(ffmpeg)
+	binFfprobe, err2 = exec.LookPath(ffprobe)
 
-	return err1 == nil && err2 == nil, ffmpegPath, ffprobePath
-}
-
-func CheckFfmpeg() (bool, string, string) {
-
-	ffmpeg := filepath.Join("bin", "ffmpeg")
-	ffprobe := filepath.Join("bin", "ffprobe")
-
-	if runtime.GOOS == "windows" {
-		ffmpeg += ".exe"
-		ffprobe += ".exe"
+	if err1 == nil && err2 == nil {
+		log.Println("ffmpeg found in $PATH")
+		return true
 	}
 
-	ffmpegPath := filepath.Join(ffmpegDir, ffmpeg)
-	ffprobePath := filepath.Join(ffmpegDir, ffprobe)
+	binFfmpeg = filepath.Join(utils.FfmpegDir, "bin", ffmpeg)
+	binFfprobe = filepath.Join(utils.FfmpegDir, "bin", ffprobe)
 
-	_, err1 := os.Stat(ffmpegPath)
-	_, err2 := os.Stat(ffprobePath)
+	_, err1 = os.Stat(binFfmpeg)
+	_, err2 = os.Stat(binFfprobe)
 
-	return err1 == nil && err2 == nil, ffmpegPath, ffprobePath
+	if err1 == nil && err2 == nil {
+		log.Println("ffmpeg found in the ffmpegDir")
+		return true
+	}
+
+	// code to download ffmpeg download 👇👇👇👇
+	accept := promptDownloadFfmpeg()
+
+	if !accept {
+		fmt.Printf("\n\nYou can disable this message, by running: avrp --no-thumb\n\n")
+		return false
+	}
+
+	err := DownloadFfmpeg()
+
+	if err != nil {
+		log.Println("ERR: Failed to download ffmpeg")
+		return false
+	}
+
+	return true
 }
 
-func NoFfmpegFileCreate() {
-	_, err := os.Create(noffmpegfile)
+func NoThumbFileCreate() {
+	_, err := os.Create(utils.NoThumbFile)
 	utils.Panic(err)
 }
 
-func NoFfmpegFileRemove() {
-	err := os.Remove(noffmpegfile)
+func NoThumbFileRemove() {
+	err := os.Remove(utils.NoThumbFile)
 	utils.Panic(err)
 }
 
-func NoFfmpeg() bool {
-	_, err := os.Stat(noffmpegfile)
+func NoThumb() bool {
+	_, err := os.Stat(utils.NoThumbFile)
 	return err == nil
 }
