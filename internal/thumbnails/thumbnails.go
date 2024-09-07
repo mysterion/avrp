@@ -15,8 +15,6 @@ import (
 	"github.com/mysterion/avrp/internal/utils"
 )
 
-var thumbdir string
-
 var ErrNotVideo = errors.New("not a video")
 
 var Available = false
@@ -94,7 +92,7 @@ func Generated(file string) bool {
 
 	for i := 0; i < int(count); i++ {
 		t := fmt.Sprintf("%d.jpg", i)
-		fd, err := os.Stat(filepath.Join(thumbdir, h, t))
+		fd, err := os.Stat(filepath.Join(utils.ThumbDir, h, t))
 		if err != nil || fd.Size() == 0 {
 			return false
 		}
@@ -113,7 +111,7 @@ func Generate(file string) {
 		log.Printf("ERR: while generating file hash - %v\n", err.Error())
 	}
 
-	outDir := filepath.Join(thumbdir, h)
+	outDir := filepath.Join(utils.ThumbDir, h)
 	err = os.MkdirAll(outDir, 0755)
 
 	if err != nil {
@@ -162,5 +160,5 @@ func Get(id string, file string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(thumbdir, h, fmt.Sprintf("%v.jpg", id)), nil
+	return filepath.Join(utils.ThumbDir, h, fmt.Sprintf("%v.jpg", id)), nil
 }
