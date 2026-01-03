@@ -138,8 +138,8 @@ func DownloadFfmpeg() error {
 
 	log.Println("Extracted successfully")
 
-	if NoThumb() {
-		NoThumbFileRemove()
+	if !ThumbEnabled() {
+		ThumbEnable()
 	}
 
 	return nil
@@ -199,10 +199,6 @@ func promptDownloadFfmpeg() bool {
 
 func initFfmpeg() bool {
 
-	if NoThumb() {
-		return false
-	}
-
 	ffmpeg := "ffmpeg"
 	ffprobe := "ffprobe"
 
@@ -250,17 +246,17 @@ func initFfmpeg() bool {
 	return true
 }
 
-func NoThumbFileCreate() {
-	_, err := os.Create(utils.NoThumbFile)
+func ThumbEnable() {
+	err := os.Remove(utils.ThumbDisabledFile)
 	utils.Panic(err)
 }
 
-func NoThumbFileRemove() {
-	err := os.Remove(utils.NoThumbFile)
+func ThumbDisable() {
+	_, err := os.Create(utils.ThumbDisabledFile)
 	utils.Panic(err)
 }
 
-func NoThumb() bool {
-	_, err := os.Stat(utils.NoThumbFile)
-	return err == nil
+func ThumbEnabled() bool {
+	_, err := os.Stat(utils.ThumbDisabledFile)
+	return err != nil
 }

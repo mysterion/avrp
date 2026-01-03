@@ -17,8 +17,8 @@ var (
 )
 
 var (
-	NoThumbFile string
-	VersionFile string
+	ThumbDisabledFile string
+	VersionFile       string
 )
 
 var DEV bool
@@ -34,7 +34,7 @@ func Init() {
 
 	ThumbDir = filepath.Join(ConfigDir, "thumbnails")
 
-	NoThumbFile = filepath.Join(ConfigDir, "nothumb")
+	ThumbDisabledFile = filepath.Join(ConfigDir, "nothumb")
 
 	VersionFile = filepath.Join(ConfigDir, "VERSION")
 

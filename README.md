@@ -11,13 +11,15 @@ Usage of avrp:
   -get-ffmpeg
         downloads ffmpeg
   -no-thumb
-        disables thumbnail generation
+        disable thumbnail generation for current session
   -port int
         port to serve on (default 5000) (default 5000)
   -reset
         removes all configs, thumbnails & 'aframe-vr-player' files
   -sha string
         Optional - download a specific commit of aframe-vr-player (default "latest")
+  -toggle-thumb
+        toggles disable/enable thumbnail generation
   -update
         checks & downloads the latest version(commit) of 'aframe-vr-player'
 ```
@@ -32,16 +34,16 @@ Usage of avrp:
 avrp --reset
 
 # serve video directory 
-avrp --dir "C:\\Users\\User\\Video\\SFW\\"
+avrp --dir "C:\\Users\\User\\Video\\"
 # linux path
-avrp --dir "/home/user/Videos/NSFW"
+avrp --dir "/home/user/Videos/"
 
 # downloads the latest version(commit) of aframe-vr-player
 avrp --update
 
-# downloads https://github.com/mysterion/aframe-vr-player/tree/6d1b7cfacfd873180e80fde53cb2a7873e1faffc 
+# downloads https://github.com/mysterion/aframe-vr-player/tree/6757b3a6266be91c57e6236505249508b3e7d9af 
 # https://github.com/mysterion/aframe-vr-player/commits/main/
-avrp --update --sha 6d1b7cfacfd873180e80fde53cb2a7873e1faffc
+avrp --update --sha 6757b3a6266be91c57e6236505249508b3e7d9af
 
 
 ```

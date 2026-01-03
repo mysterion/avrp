@@ -26,6 +26,10 @@ var (
 
 func Init() {
 
+	if !ThumbEnabled() {
+		return
+	}
+
 	Available = initFfmpeg()
 
 	if !Available {
@@ -162,4 +166,3 @@ func Get(id string, file string) (string, error) {
 	}
 	return filepath.Join(utils.ThumbDir, h, fmt.Sprintf("%v.jpg", id)), nil
 }
-
