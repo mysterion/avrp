@@ -38,7 +38,7 @@ func Init() {
 }
 
 func GetDuration(file string) (float64, error) {
-	if !utils.IsVideo(file) {
+	if !Available || !utils.IsVideo(file) {
 		return 0, ErrNotVideo
 	}
 	var secs string
@@ -162,3 +162,4 @@ func Get(id string, file string) (string, error) {
 	}
 	return filepath.Join(utils.ThumbDir, h, fmt.Sprintf("%v.jpg", id)), nil
 }
+
